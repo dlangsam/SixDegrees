@@ -7,6 +7,7 @@ import { CURATED_ACTORS } from "../utils/curatedActors";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 const CURATED_ACTORS_CACHE_KEY = "curated_actors_cache";
+const CACHE_EXPIRATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export default function StartScreen() {
   const [actor, setActor] = useState(null);
@@ -20,14 +21,22 @@ export default function StartScreen() {
     const cached = localStorage.getItem(CURATED_ACTORS_CACHE_KEY);
     if (cached) {
       try {
-        return JSON.parse(cached);
+        const { data, timestamp } = JSON.parse(cached);
+        const age = Date.now() - timestamp;
+
+        // Return cached data if not expired
+        if (age < CACHE_EXPIRATION_MS) {
+          return data;
+        }
+
+        // Expired, clear it
+        localStorage.removeItem(CURATED_ACTORS_CACHE_KEY);
       } catch {
         localStorage.removeItem(CURATED_ACTORS_CACHE_KEY);
       }
     }
 
     // Fetch actor data for curated list
-
     const actorsData = [];
 
     for (const actorName of CURATED_ACTORS) {
@@ -35,11 +44,14 @@ export default function StartScreen() {
       if (actor) actorsData.push(actor);
     }
 
-    // Cache the results
+    // Cache the results with timestamp
     try {
       localStorage.setItem(
         CURATED_ACTORS_CACHE_KEY,
-        JSON.stringify(actorsData),
+        JSON.stringify({
+          data: actorsData,
+          timestamp: Date.now()
+        }),
       );
     } catch (err) {
       console.error("Failed to cache curated actors:", err);
