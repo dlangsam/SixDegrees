@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getPopularActors, getImageUrl, KEVIN_BACON_ID } from '../api/tmdb'
+import { searchPerson, getImageUrl, KEVIN_BACON_ID } from '../api/tmdb'
 import { getApiKey } from '../api/apiKey'
 import { setStartingActor } from '../hooks/useGameState'
+import { CURATED_ACTORS } from '../utils/curatedActors'
 import LoadingSpinner from '../components/LoadingSpinner'
+
+const CURATED_ACTORS_CACHE_KEY = 'curated_actors_cache'
 
 export default function StartScreen() {
   const [actor, setActor] = useState(null)
@@ -11,26 +14,60 @@ export default function StartScreen() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
+  const getCuratedActorsData = async () => {
+    // Check cache first
+    const cached = localStorage.getItem(CURATED_ACTORS_CACHE_KEY)
+    if (cached) {
+      try {
+        return JSON.parse(cached)
+      } catch {
+        localStorage.removeItem(CURATED_ACTORS_CACHE_KEY)
+      }
+    }
+
+    // Fetch actor data for curated list
+    const apiKey = getApiKey()
+    const actorsData = []
+
+    for (const actorName of CURATED_ACTORS) {
+      try {
+        const data = await searchPerson(actorName, apiKey)
+        const actor = data.results.find(
+          a => a.known_for_department === 'Acting' && a.profile_path
+        )
+        if (actor) {
+          actorsData.push(actor)
+        }
+      } catch (err) {
+        console.error(`Failed to fetch ${actorName}:`, err)
+      }
+    }
+
+    // Cache the results
+    try {
+      localStorage.setItem(CURATED_ACTORS_CACHE_KEY, JSON.stringify(actorsData))
+    } catch (err) {
+      console.error('Failed to cache curated actors:', err)
+    }
+
+    return actorsData
+  }
+
   const fetchRandomActor = async () => {
     setLoading(true)
     setError('')
 
     try {
-      const apiKey = getApiKey()
-      // Pick a random page from 1-5 to get variety
-      const randomPage = Math.floor(Math.random() * 5) + 1
-      const data = await getPopularActors(apiKey, randomPage)
+      const curatedActors = await getCuratedActorsData()
 
-      // Filter out Kevin Bacon and actors without profile images
-      const validActors = data.results.filter(
-        a => a.id !== KEVIN_BACON_ID && a.profile_path
-      )
+      // Filter out Kevin Bacon
+      const validActors = curatedActors.filter(a => a.id !== KEVIN_BACON_ID)
 
       if (validActors.length === 0) {
         throw new Error('No valid actors found')
       }
 
-      // Pick a random actor from the results
+      // Pick a random actor from the curated list
       const randomActor = validActors[Math.floor(Math.random() * validActors.length)]
       setActor(randomActor)
     } catch (err) {
@@ -130,7 +167,7 @@ export default function StartScreen() {
                 onClick={fetchRandomActor}
                 className="bg-noir-darker text-cream font-semibold py-3 px-8 rounded-lg border border-gold/30 hover:border-gold transition-all transform hover:scale-105 active:scale-95"
               >
-                I'm Feeling Lucky
+                New Actor
               </button>
               <button
                 onClick={handleStartGame}

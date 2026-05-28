@@ -7,7 +7,7 @@ let gameState = {
   startingActor: null,
   currentActor: null,
   path: [],
-  phase: 'actor_pick', // 'actor_pick' | 'movie_pick' | 'won' | 'loading'
+  phase: 'actor_pick', // 'actor_pick' | 'movie_pick' | 'won' | 'lost' | 'loading'
   degreesUsed: 0,
   optimalPath: null,
   bfsStatus: 'idle', // 'idle' | 'running' | 'done' | 'failed'
@@ -70,6 +70,14 @@ export function setWon() {
   gameState = {
     ...gameState,
     phase: 'won',
+  }
+  notifyListeners()
+}
+
+export function setLost() {
+  gameState = {
+    ...gameState,
+    phase: 'lost',
   }
   notifyListeners()
 }

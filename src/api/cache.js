@@ -19,18 +19,17 @@ export function setCached(key, value) {
   }
 }
 
-// Wrap API calls with cache and pruning
+// Wrap API calls with cache
 export async function getCachedActorMovies(actorId, apiKey) {
   const key = `actor_${actorId}`
   const cached = getCached(key)
   if (cached) return cached
 
   const data = await getActorMovies(actorId, apiKey)
-  // Sort by popularity and take top 10
+  // Get ALL movies with posters, sorted by popularity
   const movies = (data.cast || [])
     .filter(m => m.poster_path) // Only movies with posters
     .sort((a, b) => b.popularity - a.popularity)
-    .slice(0, 10)
 
   setCached(key, movies)
   return movies
@@ -42,10 +41,9 @@ export async function getCachedMovieCast(movieId, apiKey) {
   if (cached) return cached
 
   const data = await getMovieCast(movieId, apiKey)
-  // Take top 20 billed cast members with profile images
+  // Get ALL cast members with profile images (billed cast only)
   const cast = (data.cast || [])
     .filter(c => c.profile_path) // Only actors with photos
-    .slice(0, 20)
 
   setCached(key, cast)
   return cast
