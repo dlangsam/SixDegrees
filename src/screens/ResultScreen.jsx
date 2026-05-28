@@ -13,9 +13,12 @@ export default function ResultScreen() {
   const [actorCache, setActorCache] = useState({})
   const [kevinBacon, setKevinBacon] = useState(null)
 
+  const playerDegrees = gameState.degreesUsed
+  const shouldRunBFS = gameState.phase === 'won' && playerDegrees > 1
+
   const { status, optimalPath, progress } = useBidirectionalBFS(
     gameState.startingActor?.id,
-    true // Auto-start BFS
+    shouldRunBFS // Only run BFS if won and more than 1 degree
   )
 
   // Debug: log the optimal path
@@ -98,7 +101,6 @@ export default function ResultScreen() {
     navigate('/start')
   }
 
-  const playerDegrees = gameState.degreesUsed
   const optimalDegrees = optimalPath ? optimalPath.length : null
 
   if (!gameState.startingActor) {
@@ -211,9 +213,21 @@ export default function ResultScreen() {
             Optimal Path
           </h2>
 
-          <BfsProgress progress={progress} status={status} />
+          {/* Special message for 1 degree win */}
+          {gameState.phase === 'won' && playerDegrees === 1 ? (
+            <div className="text-center py-8">
+              <p className="text-green-400 text-2xl font-semibold mb-2">
+                🎉 Perfect! You found the shortest possible path!
+              </p>
+              <p className="text-cream/70">
+                1 degree is the best possible result.
+              </p>
+            </div>
+          ) : (
+            <>
+              <BfsProgress progress={progress} status={status} />
 
-          {status === 'done' && optimalPath && (
+              {status === 'done' && optimalPath && (
             <div className="mt-8">
               <div className="text-center mb-6">
                 <p className="text-2xl text-gold mb-2">
@@ -261,12 +275,14 @@ export default function ResultScreen() {
             </div>
           )}
 
-          {status === 'failed' && (
-            <div className="text-center py-8">
-              <p className="text-cream/70">
-                Couldn't find a shorter path — impressive routing!
-              </p>
-            </div>
+              {status === 'failed' && (
+                <div className="text-center py-8">
+                  <p className="text-cream/70">
+                    Couldn't find a shorter path — impressive routing!
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 

@@ -21,9 +21,8 @@ export default function MovieCard({ movie, onClick, className = '' }) {
         </div>
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-noir-darker via-noir-darker/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-      <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform">
+      {/* Always visible title overlay */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-noir-darker via-noir-darker/90 to-transparent p-3">
         <p className="text-cream font-semibold text-sm line-clamp-2">{movie.title}</p>
         {year && (
           <p className="text-cream/60 text-xs">{year}</p>

@@ -1,125 +1,133 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useGameState, selectActor, setWon, setLost } from '../hooks/useGameState'
-import { getCachedActorMovies, getCachedMovieCast } from '../api/cache'
-import { getApiKey } from '../api/apiKey'
-import { getImageUrl, KEVIN_BACON_ID } from '../api/tmdb'
-// import PathTrail from '../components/PathTrail'
-import DegreesBadge from '../components/DegreesBadge'
-import MovieCard from '../components/MovieCard'
-import ActorCard from '../components/ActorCard'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  useGameState,
+  selectActor,
+  setWon,
+  setLost,
+} from "../hooks/useGameState";
+import { getCachedActorMovies, getCachedMovieCast } from "../api/cache";
+import { getApiKey } from "../api/apiKey";
+import { getImageUrl, KEVIN_BACON_ID } from "../api/tmdb";
+// import PathTrail from "../components/PathTrail";
+import DegreesBadge from "../components/DegreesBadge";
+import MovieCard from "../components/MovieCard";
+import ActorCard from "../components/ActorCard";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function GameScreen() {
-  const gameState = useGameState()
-  const navigate = useNavigate()
-  const [movies, setMovies] = useState([])
-  const [cast, setCast] = useState([])
-  const [selectedMovie, setSelectedMovie] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const gameState = useGameState();
+  const navigate = useNavigate();
+  const [movies, setMovies] = useState([]);
+  const [cast, setCast] = useState([]);
+  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Redirect to start if no game in progress
   useEffect(() => {
     if (!gameState.startingActor) {
-      navigate('/start')
+      navigate("/start");
     }
-  }, [gameState.startingActor, navigate])
+  }, [gameState.startingActor, navigate]);
 
   // Fetch movies for current actor when in movie_pick phase
   useEffect(() => {
-    if (gameState.phase === 'movie_pick' && gameState.currentActor) {
-      fetchMovies()
+    if (gameState.phase === "movie_pick" && gameState.currentActor) {
+      fetchMovies();
     }
-  }, [gameState.phase, gameState.currentActor])
+  }, [gameState.phase, gameState.currentActor]);
 
   const fetchMovies = async () => {
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
     try {
-      const apiKey = getApiKey()
-      const actorMovies = await getCachedActorMovies(gameState.currentActor.id, apiKey)
+      const apiKey = getApiKey();
+      const actorMovies = await getCachedActorMovies(
+        gameState.currentActor.id,
+        apiKey,
+      );
 
       if (actorMovies.length === 0) {
-        setError('No movies found for this actor')
+        setError("No movies found for this actor");
       } else {
-        setMovies(actorMovies) // Show all movies
+        setMovies(actorMovies); // Show all movies
       }
     } catch (err) {
-      setError('Failed to load movies')
-      console.error(err)
+      setError("Failed to load movies");
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleMovieClick = async (movie) => {
-    setSelectedMovie(movie)
-    setLoading(true)
-    setError('')
+    setSelectedMovie(movie);
+    setLoading(true);
+    setError("");
 
     try {
-      const apiKey = getApiKey()
-      const movieCast = await getCachedMovieCast(movie.id, apiKey)
+      const apiKey = getApiKey();
+      const movieCast = await getCachedMovieCast(movie.id, apiKey);
 
       if (movieCast.length === 0) {
-        setError('No cast found for this movie')
-        setLoading(false)
-        return
+        setError("No cast found for this movie");
+        setLoading(false);
+        return;
       }
 
       // Check if Kevin Bacon is in the cast - auto-complete if so
-      const kevinBacon = movieCast.find(actor => actor.id === KEVIN_BACON_ID)
+      const kevinBacon = movieCast.find((actor) => actor.id === KEVIN_BACON_ID);
       if (kevinBacon) {
-        selectActor(kevinBacon, movie)
-        setWon()
-        navigate('/result')
-        return
+        selectActor(kevinBacon, movie);
+        setWon();
+        navigate("/result");
+        return;
       }
 
-      setCast(movieCast)
+      setCast(movieCast);
     } catch (err) {
-      setError('Failed to load cast')
-      console.error(err)
+      setError("Failed to load cast");
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleActorClick = (actor) => {
-    if (!selectedMovie) return
+    if (!selectedMovie) return;
 
     // Check if Kevin Bacon
     if (actor.id === KEVIN_BACON_ID) {
-      selectActor(actor, selectedMovie)
-      setWon()
-      navigate('/result')
-      return
+      selectActor(actor, selectedMovie);
+      setWon();
+      navigate("/result");
+      return;
     }
 
     // Select the actor
-    selectActor(actor, selectedMovie)
+    selectActor(actor, selectedMovie);
 
     // Check if we've reached 6 degrees (the new path length)
-    const newDegreesUsed = gameState.path.length + 1
+    const newDegreesUsed = gameState.path.length + 1;
     if (newDegreesUsed >= 6) {
-      setLost()
-      navigate('/result')
-      return
+      setLost();
+      navigate("/result");
+      return;
     }
 
     // Continue game with new actor
-    setSelectedMovie(null)
-    setCast([])
-  }
+    setSelectedMovie(null);
+    setCast([]);
+  };
 
   const handleBackToMovies = () => {
-    setSelectedMovie(null)
-    setCast([])
-  }
+    setSelectedMovie(null);
+    setCast([]);
+  };
 
   if (!gameState.startingActor) {
-    return null
+    return null;
   }
 
   return (
@@ -133,7 +141,7 @@ export default function GameScreen() {
           <DegreesBadge degrees={gameState.degreesUsed} />
         </div>
 
-        {/* Path Trail - TODO: Implement custom PathTrail */}
+        {/* Path Trail - Removed (degrees badge is sufficient) */}
         {/* <div className="mb-8">
           <PathTrail
             startingActor={gameState.startingActor}
@@ -147,7 +155,7 @@ export default function GameScreen() {
           <div>
             <div className="mb-6 text-center">
               <h2 className="text-2xl font-display text-cream mb-2">
-                Choose a movie featuring{' '}
+                Choose a movie featuring{" "}
                 <span className="text-gold">{gameState.currentActor.name}</span>
               </h2>
               <p className="text-cream/60">
@@ -187,7 +195,7 @@ export default function GameScreen() {
                 ← Back to movies
               </button>
               <h2 className="text-2xl font-display text-cream mb-2">
-                Choose an actor from{' '}
+                Choose an actor from{" "}
                 <span className="text-gold">{selectedMovie.title}</span>
               </h2>
               <p className="text-cream/60">
@@ -217,5 +225,5 @@ export default function GameScreen() {
         )}
       </div>
     </div>
-  )
+  );
 }

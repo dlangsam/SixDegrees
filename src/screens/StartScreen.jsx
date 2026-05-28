@@ -1,100 +1,130 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { searchPerson, getImageUrl, KEVIN_BACON_ID } from '../api/tmdb'
-import { getApiKey } from '../api/apiKey'
-import { setStartingActor } from '../hooks/useGameState'
-import { CURATED_ACTORS } from '../utils/curatedActors'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { searchPerson, getImageUrl, KEVIN_BACON_ID } from "../api/tmdb";
+import { getApiKey } from "../api/apiKey";
+import { setStartingActor } from "../hooks/useGameState";
+import { CURATED_ACTORS } from "../utils/curatedActors";
+import LoadingSpinner from "../components/LoadingSpinner";
 
-const CURATED_ACTORS_CACHE_KEY = 'curated_actors_cache'
+const CURATED_ACTORS_CACHE_KEY = "curated_actors_cache";
 
 export default function StartScreen() {
-  const [actor, setActor] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const navigate = useNavigate()
+  const [actor, setActor] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const getCuratedActorsData = async () => {
     // Check cache first
-    const cached = localStorage.getItem(CURATED_ACTORS_CACHE_KEY)
+    const cached = localStorage.getItem(CURATED_ACTORS_CACHE_KEY);
     if (cached) {
       try {
-        return JSON.parse(cached)
+        return JSON.parse(cached);
       } catch {
-        localStorage.removeItem(CURATED_ACTORS_CACHE_KEY)
+        localStorage.removeItem(CURATED_ACTORS_CACHE_KEY);
       }
     }
 
     // Fetch actor data for curated list
-    const apiKey = getApiKey()
-    const actorsData = []
+
+    const actorsData = [];
 
     for (const actorName of CURATED_ACTORS) {
-      try {
-        const data = await searchPerson(actorName, apiKey)
-        const actor = data.results.find(
-          a => a.known_for_department === 'Acting' && a.profile_path
-        )
-        if (actor) {
-          actorsData.push(actor)
-        }
-      } catch (err) {
-        console.error(`Failed to fetch ${actorName}:`, err)
-      }
+      const actor = await fetchActor(actorName);
+      if (actor) actorsData.push(fetchActor(actorName));
     }
 
     // Cache the results
     try {
-      localStorage.setItem(CURATED_ACTORS_CACHE_KEY, JSON.stringify(actorsData))
+      localStorage.setItem(
+        CURATED_ACTORS_CACHE_KEY,
+        JSON.stringify(actorsData),
+      );
     } catch (err) {
-      console.error('Failed to cache curated actors:', err)
+      console.error("Failed to cache curated actors:", err);
     }
 
-    return actorsData
-  }
+    return actorsData;
+  };
+
+  const fetchActor = async (actorName) => {
+    const apiKey = getApiKey();
+    debugger;
+    try {
+      const data = await searchPerson(actorName, apiKey);
+      const actor = data.results.find(
+        (a) => a.known_for_department === "Acting" && a.profile_path,
+      );
+      if (actor) {
+        return actor;
+      }
+    } catch (err) {
+      console.error(`Failed to fetch ${actorName}:`, err);
+    }
+  };
 
   const fetchRandomActor = async () => {
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
 
     try {
-      const curatedActors = await getCuratedActorsData()
+      const curatedActors = await getCuratedActorsData();
 
       // Filter out Kevin Bacon
-      const validActors = curatedActors.filter(a => a.id !== KEVIN_BACON_ID)
+      const validActors = curatedActors.filter((a) => a.id !== KEVIN_BACON_ID);
 
       if (validActors.length === 0) {
-        throw new Error('No valid actors found')
+        throw new Error("No valid actors found");
       }
 
       // Pick a random actor from the curated list
-      const randomActor = validActors[Math.floor(Math.random() * validActors.length)]
-      setActor(randomActor)
+      const randomActor =
+        validActors[Math.floor(Math.random() * validActors.length)];
+      setActor(randomActor);
     } catch (err) {
-      setError('Failed to load actor. Please try again.')
-      console.error(err)
+      setError("Failed to load actor. Please try again.");
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const fetchSpecificActor = async (actorName) => {
+    setLoading(true);
+    setError("");
+    try {
+      const specificActor = await fetchActor(actorName);
+      if (!specificActor) {
+        throw new Error("No valid actors found");
+      } else if (specificActor.id === KEVIN_BACON_ID) {
+        throw new Error("Cannot start with Kevin Bacon");
+      }
+      setActor(specificActor);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchRandomActor()
-  }, [])
+    fetchRandomActor();
+  }, []);
 
   const handleStartGame = () => {
     if (actor) {
-      setStartingActor(actor)
-      navigate('/game')
+      setStartingActor(actor);
+      navigate("/game");
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-noir-darker">
         <LoadingSpinner text="Finding an actor..." />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -110,7 +140,7 @@ export default function StartScreen() {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -120,9 +150,37 @@ export default function StartScreen() {
           <h1 className="text-5xl font-display font-bold text-gold mb-4">
             Six Degrees of Kevin Bacon
           </h1>
-          <p className="text-cream/70 font-body text-lg">
-            Connect this actor to Kevin Bacon through movies and cast members
+          <p className="text-cream/70 font-body text-lg mb-6">
+            Connect an actor to Kevin Bacon through movies and cast members
           </p>
+        </div>
+
+        {/* Search Box */}
+        <div className="mb-6">
+          <div className="flex gap-2">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && fetchSpecificActor(searchQuery)}
+              type="text"
+              className="flex-1 px-4 py-3 bg-noir-dark border border-gold/30 rounded-lg text-cream placeholder-cream/30 focus:outline-none focus:border-gold transition-colors"
+              placeholder="Search for a specific actor..."
+            />
+            <button
+              onClick={() => fetchSpecificActor(searchQuery)}
+              disabled={!searchQuery.trim()}
+              className="bg-gold text-noir-darker font-semibold py-3 px-8 rounded-lg hover:bg-gold/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Search
+            </button>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex-1 h-px bg-gold/20"></div>
+          <span className="text-cream/50 text-sm">or get a random actor</span>
+          <div className="flex-1 h-px bg-gold/20"></div>
         </div>
 
         {actor && (
@@ -131,7 +189,7 @@ export default function StartScreen() {
               <div className="w-48 h-64 rounded-lg overflow-hidden shadow-lg flex-shrink-0">
                 {actor.profile_path ? (
                   <img
-                    src={getImageUrl(actor.profile_path, 'w342')}
+                    src={getImageUrl(actor.profile_path, "w342")}
                     alt={actor.name}
                     className="w-full h-full object-cover"
                   />
@@ -146,16 +204,16 @@ export default function StartScreen() {
                 <h2 className="text-4xl font-display font-bold text-cream mb-4">
                   {actor.name}
                 </h2>
-                {actor.known_for_department && (
-                  <p className="text-gold text-lg mb-4">
-                    Known for: {actor.known_for_department}
-                  </p>
-                )}
                 {actor.known_for && actor.known_for.length > 0 && (
                   <div className="mb-6">
-                    <p className="text-cream/60 text-sm mb-2">Popular movies:</p>
+                    <p className="text-cream/60 text-sm mb-2">
+                      Popular movies:
+                    </p>
                     <p className="text-cream">
-                      {actor.known_for.slice(0, 3).map(item => item.title || item.name).join(', ')}
+                      {actor.known_for
+                        .slice(0, 3)
+                        .map((item) => item.title || item.name)
+                        .join(", ")}
                     </p>
                   </div>
                 )}
@@ -180,5 +238,5 @@ export default function StartScreen() {
         )}
       </div>
     </div>
-  )
+  );
 }

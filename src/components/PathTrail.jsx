@@ -8,16 +8,23 @@ export default function PathTrail({ startingActor, path, currentActor }) {
         </span>
 
         {/* Path taken so far */}
-        {path.map((step, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <span className="text-gold">→</span>
-            <span className="text-cream/70 italic">{step.movie.title}</span>
-            <span className="text-gold">→</span>
-            <span className="text-cream font-semibold px-3 py-1 bg-gold/20 rounded-full">
-              {step.actor.name}
-            </span>
-          </div>
-        ))}
+        {path.map((step, index) => {
+          // The TO actor is either the next step's FROM actor, or currentActor for last step
+          const toActor = index < path.length - 1
+            ? path[index + 1].actor
+            : currentActor
+
+          return (
+            <div key={index} className="flex items-center gap-2">
+              <span className="text-gold">→</span>
+              <span className="text-cream/70 italic">{step.movie.title}</span>
+              <span className="text-gold">→</span>
+              <span className="text-cream font-semibold px-3 py-1 bg-gold/20 rounded-full">
+                {toActor?.name}
+              </span>
+            </div>
+          )
+        })}
 
         {/* Current selection in progress */}
         {currentActor && currentActor.id !== startingActor.id && (
@@ -28,5 +35,5 @@ export default function PathTrail({ startingActor, path, currentActor }) {
         )}
       </div>
     </div>
-  )
+  );
 }
