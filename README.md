@@ -13,11 +13,7 @@ A browser-based guessing game where you navigate from a randomly assigned actor 
 
 ## Demo
 
-[Live Demo](#) <!-- Add your deployed URL here -->
-
-## Screenshots
-
-<!-- Add screenshots here -->
+[Live Demo](https://sixdegreesofkevinbacon.netlify.app/)
 
 ## Getting Started
 
@@ -35,27 +31,32 @@ A browser-based guessing game where you navigate from a randomly assigned actor 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <your-repo-url>
 cd six-degrees
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Create a `.env` file in the root directory:
+
 ```bash
 cp .env.example .env
 ```
 
 4. Add your TMDB API key to `.env`:
+
 ```
 VITE_TMDB_API_KEY=your_api_key_here
 ```
 
 5. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -90,31 +91,6 @@ src/
 └── data/          # Static data files
 ```
 
-## Deployment
-
-### Netlify
-
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start)
-
-1. Build the project:
-```bash
-npm run build
-```
-
-2. Deploy the `dist` folder to Netlify
-
-3. Add environment variable:
-   - Go to Site Settings → Environment Variables
-   - Add `VITE_TMDB_API_KEY` with your API key
-
-### Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
-
-1. Import your repository
-2. Add environment variable: `VITE_TMDB_API_KEY`
-3. Deploy!
-
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
@@ -129,16 +105,6 @@ MIT
 - Inspired by the classic "Six Degrees of Kevin Bacon" game
 - Built with ❤️ and [Claude Code](https://claude.ai/code)
 
-## API Usage
-
-This app uses the TMDB API. The API key is exposed on the client-side, which is acceptable for TMDB's use case since:
-- It's a read-only API
-- TMDB expects client-side usage
-- Rate limits protect against abuse
-- You can regenerate your key anytime
-
-For high-traffic production apps, consider setting up a backend proxy.
-
 ## Performance Notes
 
 - **Caching**: SessionStorage caches API responses for faster gameplay
@@ -147,5 +113,3 @@ For high-traffic production apps, consider setting up a backend proxy.
 - **1-Degree Skip**: BFS doesn't run for 1-degree wins (already optimal)
 
 ---
-
-Made with Claude Code 🤖

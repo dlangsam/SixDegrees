@@ -32,7 +32,7 @@ export default function StartScreen() {
 
     for (const actorName of CURATED_ACTORS) {
       const actor = await fetchActor(actorName);
-      if (actor) actorsData.push(fetchActor(actorName));
+      if (actor) actorsData.push(actor);
     }
 
     // Cache the results
@@ -50,7 +50,6 @@ export default function StartScreen() {
 
   const fetchActor = async (actorName) => {
     const apiKey = getApiKey();
-    debugger;
     try {
       const data = await searchPerson(actorName, apiKey);
       const actor = data.results.find(
@@ -161,7 +160,9 @@ export default function StartScreen() {
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchSpecificActor(searchQuery)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && fetchSpecificActor(searchQuery)
+              }
               type="text"
               className="flex-1 px-4 py-3 bg-noir-dark border border-gold/30 rounded-lg text-cream placeholder-cream/30 focus:outline-none focus:border-gold transition-colors"
               placeholder="Search for a specific actor..."
